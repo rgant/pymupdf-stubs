@@ -3,7 +3,7 @@ import types
 from collections.abc import Iterator, Sequence
 from io import BufferedReader, BytesIO
 from pathlib import Path
-from typing import Any, Literal, TypedDict, overload
+from typing import Any, Final, Literal, TypedDict, overload
 
 from .table import TableFinder
 
@@ -24,6 +24,11 @@ csRGB: Colorspace
 class Quad: ...
 
 class Pixmap:
+    ROTATE_90: Final = 1
+    ROTATE_270: Final = 2
+    ROTATE_180: Final = 3
+    FLIP_LEFT_RIGHT: Final = 4
+    FLIP_TOP_BOTTOM: Final = 5
     @overload
     def __init__(
         self,
@@ -94,6 +99,7 @@ class Pixmap:
     def pil_tobytes(self, *args, unmultiply: bool = False, **kwargs) -> bytes: ...
     def pil_image(self) -> Any: ...
     def pil_save(self, *args, unmultiply: bool = False, **kwargs) -> None: ...
+    def flip_rotate(self, mode: int) -> Pixmap: ...
 
 class Point:
     @overload
@@ -545,7 +551,7 @@ class Document:
     ) -> bytes: ...
     def save(
         self,
-        outfile: str | Path | object,
+        filename: str | Path | object,
         garbage: int = 0,
         clean: bool = False,
         deflate: bool = False,
@@ -555,14 +561,18 @@ class Document:
         ascii: bool = False,
         expand: int = 0,
         linear: bool = False,
-        pretty: bool = False,
         no_new_id: bool = False,
+        appearance: bool = False,
+        pretty: bool = False,
         encryption: int = PDF_ENCRYPT_NONE,
-        permissions: int = -1,
+        permissions: int = 4095,
         owner_pw: str | None = None,
         user_pw: str | None = None,
+        preserve_metadata: int = 1,
         use_objstms: int = 0,
+        compression_effort: int = 0,
         raise_on_repair: bool = False,
+        reproducible: bool = False,
     ) -> None: ...
     def repair(self) -> None: ...
     def close(self) -> None: ...
@@ -615,6 +625,7 @@ class Document:
         use_objstms=0,
         compression_effort=0,
         raise_on_repair=False,
+        reproducible: bool = False,
     ) -> bytes: ...
     def xref_object(self, xref: int, compressed: int = 0, ascii: int = 0) -> str: ...
     def scrub(
@@ -914,6 +925,7 @@ class Page:
     ) -> str | TextPageDict | TextPageRawDict | list[TextWord] | list[TextBlock]: ...
     def find_tables(
         self,
+        *,
         clip: Rect
         | IRect
         | tuple[float | int, float | int, float | int, float | int]
@@ -940,7 +952,13 @@ class Page:
         text_x_tolerance: float = 3,
         text_y_tolerance: float = 3,
         add_lines: Sequence[tuple[Point, Point]] | None = None,
+        add_boxes: Sequence[RectLike] | None = None,
+        paths: Sequence[DrawingPathDict] | None = None,
+        use_layout: bool = True,
+        union: bool = False,
+        refine: bool = False,
     ) -> TableFinder: ...
+    def repair_flat_rbgs(self) -> None: ...
     @overload
     def get_images(
         self, full: Literal[False] = False

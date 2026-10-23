@@ -204,3 +204,41 @@ def test_new():
 
     # 1.28: Document archive parameter
     assert_type(pymupdf.Document(archive=pymupdf.Archive()), pymupdf.Document)
+
+    # 1.28.2: reproducible save
+    doc.save("out.pdf", reproducible=True)
+    assert_type(doc.write(reproducible=True), bytes)
+
+    # Document.save parameters that match the runtime names
+    doc.save(filename="out.pdf", appearance=True, preserve_metadata=0)
+    doc.save("out.pdf", compression_effort=5)
+
+    # 1.28.2: find_tables options and Table.to_html
+    from pymupdf.table import SpanCell, TableFinder, TableHeader
+
+    refined = page.find_tables(
+        use_layout=False,
+        union=True,
+        refine=True,
+        add_boxes=[pymupdf.Rect(0, 0, 10, 10)],
+        paths=page.get_drawings(),
+    )
+    assert_type(refined, TableFinder)
+    refined_table = refined.tables[0]
+    assert_type(refined_table.to_html(), str)
+    assert_type(refined_table.placements, list[list[SpanCell]] | None)
+    assert_type(refined_table.header_rows, int)
+    assert_type(refined_table.section_rows, tuple[int, ...])
+
+    # TableHeader is assignable, and its constructor matches the runtime
+    refined_table.header = TableHeader((0, 0, 1, 1), [(0, 0, 1, 1)], ["a"], False)
+
+    # 2.0: Pixmap.flip_rotate
+    assert_type(pix.flip_rotate(pymupdf.Pixmap.ROTATE_90), pymupdf.Pixmap)
+    pix.flip_rotate(pymupdf.Pixmap.ROTATE_270)
+    pix.flip_rotate(pymupdf.Pixmap.ROTATE_180)
+    pix.flip_rotate(pymupdf.Pixmap.FLIP_LEFT_RIGHT)
+    pix.flip_rotate(pymupdf.Pixmap.FLIP_TOP_BOTTOM)
+
+    # 2.0: repair_flat_rbgs
+    assert_type(page.repair_flat_rbgs(), None)

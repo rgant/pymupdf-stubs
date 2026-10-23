@@ -7,13 +7,33 @@ class CellGroup:
 
 class TableRow(CellGroup): ...
 
-class TableHeader(CellGroup):
-    @property
-    def bbox(self) -> tuple[float, float, float, float]: ...
-    @property
-    def names(self) -> list[str]: ...
-    @property
-    def external(self) -> bool: ...
+class TableHeader:
+    bbox: tuple[float, float, float, float]
+    cells: list[tuple[float, float, float, float]]
+    names: list[str]
+    external: bool
+    def __init__(
+        self,
+        bbox: tuple[float, float, float, float],
+        cells: list[tuple[float, float, float, float]],
+        names: list[str],
+        above: bool,
+    ) -> None: ...
+
+class SpanCell:
+    bbox: tuple[float, float, float, float] | None
+    text: str
+    colspan: int
+    rowspan: int
+    tag: str
+    def __init__(
+        self,
+        bbox: tuple[float, float, float, float] | None,
+        text: str,
+        colspan: int,
+        rowspan: int,
+        tag: str = "td",
+    ) -> None: ...
 
 class Table:
     @property
@@ -27,8 +47,14 @@ class Table:
     def rows(self) -> list[TableRow]: ...
     @property
     def header(self) -> TableHeader: ...
+    @header.setter
+    def header(self, value: TableHeader) -> None: ...
     @property
     def cells(self) -> list[tuple[float, float, float, float]]: ...
+    placements: list[list[SpanCell]] | None
+    header_rows: int
+    section_rows: tuple[int, ...]
+    def to_html(self) -> str: ...
 
 class TableFinder:
     @property
